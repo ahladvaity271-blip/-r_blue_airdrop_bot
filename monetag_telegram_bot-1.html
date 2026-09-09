@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Monetag Coins</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f2f4f8;color:#172033}.app{max-width:520px;margin:auto;padding:18px}header{background:linear-gradient(135deg,#6c5ce7,#0984e3);color:white;border-radius:20px;padding:22px;text-align:center;box-shadow:0 8px 25px #0002}h1{margin:0 0 12px}.balance{font-size:28px;font-weight:800}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:15px 0}.stats div,.card{background:white;border-radius:16px;padding:15px;box-shadow:0 4px 15px #0001}.stats div{text-align:center}.stats b{display:block;font-size:23px}.stats small{color:#687080}.primary,.game{width:100%;border:0;border-radius:14px;padding:16px;font-size:17px;font-weight:700;color:white;background:#00a878;margin-bottom:15px}.game{background:#ff7a00;margin-top:10px}.card{margin-bottom:15px}input{width:100%;padding:13px;border:1px solid #ccd2dc;border-radius:10px;font-size:16px}.result{text-align:center;padding:14px;margin-top:10px;border-radius:10px;background:#f1f3f6;font-weight:700}.success{background:#d9f8e8;color:#087443}.danger{background:#ffe1e1;color:#a31313}button:disabled{opacity:.55}
+</style>
+<script src="//libtl.com/sdk.js" data-zone="11755684" data-sdk="show_11755684"></script>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+<div class="app">
+  <header><h1>🪙 Monetag Coins</h1><div class="balance"><span id="coins">0</span> Coins</div></header>
+  <section class="stats"><div><b id="ads">0</b><small>Ads Watched</small></div><div><b id="wins">0</b><small>Wins</small></div><div><b id="losses">0</b><small>Losses</small></div></section>
+  <button id="adBtn" class="primary">📺 Watch Ad +5 Coins</button>
+  <section class="card">
+    <h2>🍎 Apple of Fortune</h2>
+    <p>Minimum bet: 10 Coins</p>
+    <input id="bet" type="number" min="10" value="10" step="1">
+    <button id="playBtn" class="game">Play Game</button>
+    <div id="result" class="result">Choose your bet and play.</div>
+  </section>
+  <section class="card"><h2>🔗 My Referral</h2><p>আপনার Referral Link:</p><div id="refLink" style="word-break:break-all;background:#f1f3f6;padding:10px;border-radius:10px;font-size:13px">Loading...</div><button id="copyRefBtn" class="game">📋 Copy Referral Link</button><p><b id="refCount">0</b> জন আপনার লিংক দিয়ে Start করেছে</p><div id="refList"></div><small style="color:#687080">Real country ও সব user's ad count দেখাতে backend/database প্রয়োজন।</small></section><section class="card"><h3>📊 Statistics</h3><p>Total Ads: <b id="ads2">0</b></p><p>Total Coins: <b id="coins2">0</b></p></section>
+</div>
+<script>
+const tg=window.Telegram?.WebApp; tg?.ready(); tg?.expand();
+const KEY='monetag_demo_state_v1';
+let state=JSON.parse(localStorage.getItem(KEY)||'null')||{coins:0,ads:0,wins:0,losses:0};
+const $=id=>document.getElementById(id);
+function save(){localStorage.setItem(KEY,JSON.stringify(state));render()}
+function render(){$('coins').textContent=state.coins;$('coins2').textContent=state.coins;$('ads').textContent=state.ads;$('ads2').textContent=state.ads;$('wins').textContent=state.wins;$('losses').textContent=state.losses}
+render();
+
+$('adBtn').onclick=async()=>{
+  const btn=$('adBtn'); btn.disabled=true; btn.textContent='⏳ Loading Ad...';
+  try{
+    if(typeof show_11755684!=='function') throw new Error('Ad SDK not loaded');
+    await show_11755684();
+    state.coins+=5; state.ads+=1; save();
+    $('result').textContent='✅ Ad completed! +5 Coins';
+    $('result').className='result success';
+  }catch(e){
+    $('result').textContent='❌ Ad was not completed.';
+    $('result').className='result danger';
+  }finally{btn.disabled=false;btn.textContent='📺 Watch Ad +5 Coins'}
+};
+
+$('playBtn').onclick=()=>{
+  const bet=Math.floor(Number($('bet').value));
+  if(!Number.isFinite(bet)||bet<10){msg('Minimum bet is 10 Coins.','danger');return}
+  if(bet>state.coins){msg('Not enough Coins.','danger');return}
+  state.coins-=bet;
+  // Demo game: 45% win chance. Replace with server-side RNG for production.
+  const win=Math.random()<0.45;
+  if(win){const reward=bet*2;state.coins+=reward;state.wins++;msg(`🍎 You WIN! +${reward} Coins`,'success')}
+  else{state.losses++;msg(`💥 You LOSE! -${bet} Coins`,'danger')}
+  save();
+};
+function msg(t,c){$('result').textContent=t;$('result').className='result '+c}
+
+
+const BOT_USERNAME="YOUR_BOT_USERNAME";
+function getTgUser(){return tg?.initDataUnsafe?.user||null}
+function refCode(){const u=getTgUser();return u?String(u.id):"demo_user"}
+function refLink(){return `https://t.me/${BOT_USERNAME}?start=ref_${encodeURIComponent(refCode())}`}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]))}
+function renderRefs(){const l=refLink();$("refLink").textContent=l;const a=JSON.parse(localStorage.getItem("demo_referrals")||"[]");$("refCount").textContent=a.length;$("refList").innerHTML=a.length?a.map((x,i)=>`<div style="padding:10px 0;border-top:1px solid #eee"><b>${esc(x.name||"User "+(i+1))}</b><div>🌍 Country: ${esc(x.country||"Unknown")}</div><div>📺 Ads: ${Number(x.ads||0)} | 🪙 Coins: ${Number(x.coins||0)}</div></div>`).join(""):"<p style='color:#687080'>কোনো referral এখনো নেই।</p>"}
+$("copyRefBtn").onclick=async()=>{try{await navigator.clipboard.writeText(refLink());msg("✅ Referral link copied!","success")}catch(e){msg("লিংকটি কপি করা যায়নি।","danger")}};
+const sp=tg?.initDataUnsafe?.start_param||new URLSearchParams(location.search).get("startapp");if(sp?.startsWith("ref_"))localStorage.setItem("referred_by",sp.slice(4));renderRefs();
+</script>
+</body></html>
