@@ -60,7 +60,7 @@ $('playBtn').onclick=()=>{
 function msg(t,c){$('result').textContent=t;$('result').className='result '+c}
 
 
-const BOT_USERNAME="YOUR_BOT_USERNAME";
+const BOT_USERNAME="r_blue_airdrop_bot";
 function getTgUser(){return tg?.initDataUnsafe?.user||null}
 function refCode(){const u=getTgUser();return u?String(u.id):"demo_user"}
 function refLink(){return `https://t.me/${BOT_USERNAME}?start=ref_${encodeURIComponent(refCode())}`}
